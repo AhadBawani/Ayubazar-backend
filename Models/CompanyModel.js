@@ -2,13 +2,17 @@ const mongoose = require('mongoose');
 
 const CompanyModel = new mongoose.Schema(
     {
-        companyName:{
-            type:String,
-            required:true
+        companyName: {
+            type: String,
+            required: true
+        },
+        companyImage: {
+            type: String,
+            required: true
         }
     },
     {
-        timestamps:true
+        timestamps: true
     }
 );
 

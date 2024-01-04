@@ -4,13 +4,17 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const dbConnection = require('./Utils/dbConnection');
 const CompanyRoutes = require('./Admin/Routes/CompanyRoutes');
+const ProductRoutes = require('./Admin/Routes/ProductsRoutes');
 require('dotenv/config');
 
 dbConnection();
 app.use(cors());
+app.use('/company-images', express.static('Images/CompanyImages'));
+app.use('/product-images', express.static('Images/ProductImages'));
 app.use(bodyParser.json());
 
 app.use('/company', CompanyRoutes);
+app.use('/product', ProductRoutes);
 
 app.use('/', (req, res) => {
     res.send({

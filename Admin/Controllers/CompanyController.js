@@ -1,7 +1,8 @@
 const Company = require('../../Models/CompanyModel');
 
+
 module.exports.ADD_COMPANY = async (req, res) => {
-    const companyName = req.body.companyName;
+    const { companyName } = req.body;
 
     try {
         await Company.findOne({ companyName: companyName })
@@ -14,7 +15,8 @@ module.exports.ADD_COMPANY = async (req, res) => {
                 }
                 else {
                     const company = new Company({
-                        companyName: companyName
+                        companyName: companyName,
+                        companyImage: req.file.filename
                     }).save();
 
                     company.then(company => {
@@ -22,7 +24,8 @@ module.exports.ADD_COMPANY = async (req, res) => {
                             message: "company created successfull!",
                             company: {
                                 _id: company._id,
-                                companyName: company.companyName
+                                companyName: company.companyName,
+                                companyImage: company.companyImage
                             }
                         });
                     })

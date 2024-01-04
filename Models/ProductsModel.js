@@ -15,15 +15,13 @@ const productsModel = new mongoose.Schema(
             required: true,
             ref: 'Company'
         },
-        category: {
-            type: String,
-            required: true,
-            ref:'Category'
+        description: {
+            type: String
         },
         options: {
             type: Array,
             required: true
-        },        
+        },
         outOfStock: {
             type: Boolean,
             required: true
