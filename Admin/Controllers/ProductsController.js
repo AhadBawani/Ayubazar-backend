@@ -1,7 +1,7 @@
 const Product = require('../../Models/ProductsModel');
 
 module.exports.ADD_PRODUCT = async (req, res) => {
-    const { productName, productCompany, description, options } = req.body;    
+    const { productName, productCompany, description, options } = req.body;
     try {
         await Product.findOne({ productName: productName, productCompany: productCompany })
             .exec()
@@ -46,6 +46,7 @@ module.exports.ADD_PRODUCT = async (req, res) => {
 module.exports.GET_ALL_PRODUCTS = async (req, res) => {
     try {
         await Product.find({})
+            .populate('productCompany', '_id companyName')
             .exec()
             .then((productResponse) => {
                 res.status(200).json(productResponse);
@@ -53,5 +54,25 @@ module.exports.GET_ALL_PRODUCTS = async (req, res) => {
     }
     catch (error) {
         console.log("error in get all product controller", error);
+    }
+}
+
+module.exports.GET_PRODUCT_BY_ID = async (req, res) => {
+    const productId = req.params.productId;
+    try {        
+        await Product.findById(productId)
+            .exec()
+            .then((productResponse) => {
+                if (productResponse) {
+                    res.status(200).json(productResponse);
+                } else {
+                    res.status(404).send({
+                        message: "Product not found!"
+                    })
+                }
+            })
+    }
+    catch (error) {
+        console.log('error in get product by id controller : ', error);
     }
 }

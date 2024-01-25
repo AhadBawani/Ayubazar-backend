@@ -1,5 +1,5 @@
 const Company = require('../../Models/CompanyModel');
-
+const Products = require('../../Models/ProductsModel');
 
 module.exports.ADD_COMPANY = async (req, res) => {
     const { companyName } = req.body;
@@ -70,12 +70,25 @@ module.exports.EDIT_COMPANY = async (req, res) => {
 }
 
 module.exports.GET_ALL_COMPANY = async (req, res) => {
+    const companies = await Company.find().exec();
+    const companyList = [];
     try {
-        await Company.find()
-            .exec()
-            .then((response) => {
-                res.status(200).json(response);
-            })
+        for (const company of companies) {
+            const products = await Products.find({ productCompany: company._id });
+            const parsedProducts = products.map((product) => ({
+                _id: product._id,
+                productName: product.productName,                
+                options: JSON.parse(product.options),                
+            }));
+
+            companyList.push({
+                _id: company._id,
+                companyName: company.companyName,
+                products: parsedProducts,
+            });
+        }
+        
+        res.status(200).json(companyList);
     }
     catch (error) {
         console.log('error in get all company controller : ', error);

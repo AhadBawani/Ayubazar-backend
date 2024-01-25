@@ -5,6 +5,9 @@ const cors = require('cors');
 const dbConnection = require('./Utils/dbConnection');
 const CompanyRoutes = require('./Admin/Routes/CompanyRoutes');
 const ProductRoutes = require('./Admin/Routes/ProductsRoutes');
+const UsersRoutes = require('./Routes/UsersRoutes');
+const BillingAddressRoutes = require('./Routes/BillingAddressRoutes');
+const ShippingAddressRoutes = require('./Routes/ShippingAddressRoutes');
 require('dotenv/config');
 
 dbConnection();
@@ -15,6 +18,9 @@ app.use(bodyParser.json());
 
 app.use('/company', CompanyRoutes);
 app.use('/product', ProductRoutes);
+app.use('/user', UsersRoutes);
+app.use('/billing-address', BillingAddressRoutes);
+app.use('/shipping-address', ShippingAddressRoutes);
 
 app.use('/', (req, res) => {
     res.send({
