@@ -1,14 +1,14 @@
 const Product = require('../../Models/ProductsModel');
 
 module.exports.ADD_PRODUCT = async (req, res) => {
-    const { productName, productCompany, description, options } = req.body;
+    const { productName, productCompany, description, options, bulletDescription } = req.body;
     try {
         await Product.findOne({ productName: productName, productCompany: productCompany })
             .exec()
             .then((response) => {
                 if (response) {
                     res.status(409).send({
-                        message: "Company already exists!"
+                        message: "Product already exists!"
                     })
                 }
                 else {
@@ -17,8 +17,10 @@ module.exports.ADD_PRODUCT = async (req, res) => {
                         productCompany: productCompany,
                         productImage: req.file.filename,
                         description: description,
+                        bulletDescription:bulletDescription,
                         options: options,
                         outOfStock: false,
+                        discount:null
                     }).save();
 
                     product.then(productResponse => {
@@ -30,6 +32,7 @@ module.exports.ADD_PRODUCT = async (req, res) => {
                                 productImage: productResponse.productImage,
                                 productCompany: productResponse.productCompany,
                                 description: productResponse.description,
+                                bulletDescription:productResponse.bulletDescription,
                                 options: productResponse.options,
                                 outOfStock: productResponse.outOfStock
                             }
@@ -45,7 +48,7 @@ module.exports.ADD_PRODUCT = async (req, res) => {
 
 module.exports.GET_ALL_PRODUCTS = async (req, res) => {
     try {
-        await Product.find({})
+        await Product.find()
             .populate('productCompany', '_id companyName')
             .exec()
             .then((productResponse) => {
@@ -59,7 +62,7 @@ module.exports.GET_ALL_PRODUCTS = async (req, res) => {
 
 module.exports.GET_PRODUCT_BY_ID = async (req, res) => {
     const productId = req.params.productId;
-    try {        
+    try {
         await Product.findById(productId)
             .exec()
             .then((productResponse) => {
@@ -74,5 +77,45 @@ module.exports.GET_PRODUCT_BY_ID = async (req, res) => {
     }
     catch (error) {
         console.log('error in get product by id controller : ', error);
+    }
+}
+
+module.exports.DISABLE_PRODUCT = async (req, res) => {
+    const productId = req.params.productId;
+
+    try {
+        await Product.findByIdAndUpdate(productId, { outOfStock: true }, { new: true })
+            .exec()
+            .then((updateResponse) => {
+                if (updateResponse) {
+                    res.status(200).send({
+                        message: "product is out of stock now!",
+                        product: updateResponse
+                    })
+                }
+            })
+    }
+    catch (error) {
+        console.log('error in disable product controller : ', error);
+    }
+}
+
+module.exports.ENABLE_PRODUCT = async (req, res) => {
+    const productId = req.params.productId;
+
+    try {
+        await Product.findByIdAndUpdate(productId, { outOfStock: false }, { new: true })
+            .exec()
+            .then((updateResponse) => {
+                if (updateResponse) {
+                    res.status(200).send({
+                        message: "product is live now!",
+                        product: updateResponse
+                    })
+                }
+            })
+    }
+    catch (error) {
+        console.log('error in enable product controller : ', error);
     }
 }

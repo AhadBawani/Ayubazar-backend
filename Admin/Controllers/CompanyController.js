@@ -71,14 +71,14 @@ module.exports.EDIT_COMPANY = async (req, res) => {
 
 module.exports.GET_ALL_COMPANY = async (req, res) => {
     const companies = await Company.find().exec();
-    const companyList = [];
+    const companyList = [];    
     try {
         for (const company of companies) {
-            const products = await Products.find({ productCompany: company._id });
+            const products = await Products.find({ productCompany: company._id });            
             const parsedProducts = products.map((product) => ({
                 _id: product._id,
-                productName: product.productName,                
-                options: JSON.parse(product.options),                
+                productName: product.productName,
+                options: product.options,
             }));
 
             companyList.push({
@@ -87,7 +87,7 @@ module.exports.GET_ALL_COMPANY = async (req, res) => {
                 products: parsedProducts,
             });
         }
-        
+
         res.status(200).json(companyList);
     }
     catch (error) {

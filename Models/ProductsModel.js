@@ -15,8 +15,14 @@ const productsModel = new mongoose.Schema(
             required: true,
             ref: 'Company'
         },
+        bulletDescription: {
+            type: Array,
+        },
+        discount: {
+            type: Number
+        },
         description: {
-            type: String
+            type: Array
         },
         options: {
             type: Array,
