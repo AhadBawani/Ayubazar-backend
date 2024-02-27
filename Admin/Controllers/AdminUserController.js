@@ -87,3 +87,40 @@ module.exports.ADMIN_USER_SIGNUP = async (req, res) => {
         console.log('error in user sign up controller : ', error);
     }
 }
+
+module.exports.VALIDATE_USER = async (req, res) => {
+    const token = req.body.token;
+
+    try {
+        // Verify the token
+        jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+            if (err) {
+                // Token is invalid
+                return res.status(401).json({ message: 'Token Expired!' });
+            } else {
+                // Token is valid
+                const userId = decoded.userId;
+                User.findById(userId)
+                .select('_id displayName email type')
+                    .exec()
+                    .then((userResponse) => {
+                        if (userResponse) {
+                            return res.status(200).json({
+                                user:userResponse,
+                                token:token
+                            });
+                        }
+                        else {
+                            return res.status(404).send({
+                                message: "User not found!"
+                            })
+                        }
+                    })
+
+            }
+        });
+    } catch (error) {
+        console.log('error in validate user controller : ', error);
+        return res.status(500).json({ message: 'Internal server error' });
+    }
+}

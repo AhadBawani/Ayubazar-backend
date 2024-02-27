@@ -11,8 +11,12 @@ const BlogModel = new mongoose.Schema(
             required:true
         },
         blogText:{
-            type:String,
+            type:Array,
             required:true
+        },
+        delete:{
+            type:Boolean,
+            default:false
         }
     },
     {

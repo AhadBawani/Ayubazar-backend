@@ -56,12 +56,12 @@ module.exports.VALIDATE_COUPON = async (req, res) => {
     }
 }
 
-module.exports.GET_ALL_COUPONS = async (req, res) => {
+module.exports.GET_ALL_COUPONS = async (req, res) => {    
     try {
         await Coupons.find()
             .exec()
             .then((response) => {
-                res.status(200).json(response);
+                res.status(200).json(response);                
             })
     }
     catch (error) {

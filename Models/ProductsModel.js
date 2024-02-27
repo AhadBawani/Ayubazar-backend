@@ -15,6 +15,11 @@ const productsModel = new mongoose.Schema(
             required: true,
             ref: 'Company'
         },
+        productCategory:{
+            type:String,
+            required:true,
+            ref:'Category'
+        },
         bulletDescription: {
             type: Array,
         },
