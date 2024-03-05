@@ -1,33 +1,31 @@
 const Product = require('../../Models/ProductsModel');
-const multer = require('multer');
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        cb(null, "./Images/ProductImages");
-    },
-    filename: function (req, file, cb) {
-        cb(null, file.originalname)
-    }
-})
-const upload = multer({ storage: storage }).single('productImage');
+const path = require('path');
 
 module.exports.ADD_PRODUCT = async (req, res) => {
-    const { productName, productCompany, description, options, bulletDescription, productCategory } = req.body;
-    console.log(req.body);
+    const { productName, productCompany, description, options, bulletDescription, productCategory } = req.body;    
     try {
         await Product.findOne({ productName: productName, productCompany: productCompany })
             .exec()
-            .then((response) => {
+            .then(async (response) => {
                 if (response) {
                     res.status(409).send({
                         message: "Product already exists!"
                     })
                 }
                 else {
+                    if (!req.files || Object.keys(req.files).length === 0) {
+                        return res.status(400).json({ message: 'No files were uploaded.' });
+                    }
+
+                    const productImage = req.files.productImage;
+                    const uploadPath = path.join(__dirname, '..', '..', 'Images', 'ProductImages', productImage.name);
+                    await productImage.mv(uploadPath);
+
                     const product = new Product({
                         productName: productName,
                         productCompany: productCompany,
                         productCategory: productCategory,
-                        productImage: req.file.filename,
+                        productImage: productImage.name,
                         description: description,
                         bulletDescription: bulletDescription,
                         options: options,

@@ -15,6 +15,8 @@ const AdminUserRoutes = require('./Admin/Routes/AdminUserRoutes');
 const OfferDiscountRoutes = require('./Admin/Routes/OfferDiscountRoutes');
 const ProductReviewRoutes = require('./Routes/ProductReviewRoutes');
 const BlogRoutes = require('./Admin/Routes/BlogRoutes');
+const ContactUsRoutes = require('./Admin/Routes/ContactUsRoutes');
+const CategoryRoutes = require('./Admin/Routes/CategoryRoutes');
 const scheduler = require('./Middlewares/scheduler');
 require('dotenv/config');
 
@@ -37,6 +39,8 @@ app.use('/review', ProductReviewRoutes);
 app.use('/admin-user', AdminUserRoutes);
 app.use('/offer', OfferDiscountRoutes);
 app.use('/blog', BlogRoutes);
+app.use('/category', CategoryRoutes);
+app.use('/contact', ContactUsRoutes);
 
 app.use('/', (req, res) => {
     res.send({
