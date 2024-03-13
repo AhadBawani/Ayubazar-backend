@@ -22,12 +22,14 @@ const productsModel = new mongoose.Schema(
         },
         bulletDescription: {
             type: Array,
+            required:true
         },
         discount: {
             type: Number
         },
         description: {
-            type: Array
+            type: Array,
+            required:true
         },
         options: {
             type: Array,

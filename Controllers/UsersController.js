@@ -3,6 +3,7 @@ const ShippingAddress = require('../Models/ShippingAddressModel');
 const BillingAddress = require('../Models/BillingAddressModel');
 const transporter = require('../Utils/transporter');
 const jwt = require('jsonwebtoken');
+const generateRandomPassword = require('../Utils/generatePassword');
 require('dotenv/config');
 
 module.exports.LOGIN_USER = async (req, res) => {
@@ -22,6 +23,8 @@ module.exports.LOGIN_USER = async (req, res) => {
                                         const user = {
                                             _id: userResponse._id,
                                             displayName: userResponse.displayName,
+                                            firstName: userResponse.firstName,
+                                            lastName: userResponse.lastName,
                                             email: userResponse.email,
                                             password: userResponse.password,
                                             shippingAddress: shippingResponse,
@@ -101,6 +104,8 @@ module.exports.GET_USER_BY_ID = async (req, res) => {
                                     const user = {
                                         _id: userResponse._id,
                                         displayName: userResponse.displayName,
+                                        firstName: userResponse.firstName,
+                                        lastName: userResponse.lastName,
                                         email: userResponse.email,
                                         password: userResponse.password,
                                         shippingAddress: shippingResponse,
@@ -215,8 +220,8 @@ module.exports.RESET_PASSWORD = async (req, res) => {
                         .then((updateResponse) => {
                             if (updateResponse) {
                                 res.status(200).send({
-                                    message : "Password updated successfully!",
-                                    response:updateResponse
+                                    message: "Password updated successfully!",
+                                    response: updateResponse
                                 })
                             }
                         })
@@ -227,5 +232,36 @@ module.exports.RESET_PASSWORD = async (req, res) => {
     }
     catch (error) {
         console.log('error in reset password controller : ', error);
+    }
+}
+
+module.exports.GET_USER_BY_EMAIL = async (req, res) => {
+    const { email } = req.body;
+
+    try {
+        await User.findOne({ email: email })
+            .exec()
+            .then(async (userResponse) => {
+                if (userResponse) {
+                    res.status(200).json(userResponse);
+                } else {
+                    const displayName = email.toString().split('@');
+                    const newUser = new User({
+                        email: email,
+                        password: generateRandomPassword(),
+                        displayName: displayName[0]
+                    }).save();
+
+                    newUser
+                        .then((newUserResponse) => {
+                            if (newUserResponse) {
+                                res.status(200).json(newUserResponse);
+                            }
+                        })
+                }
+            })
+    }
+    catch (error) {
+        console.log('error in getting user by email : ', error);
     }
 }

@@ -1,11 +1,10 @@
 const BillingAddress = require('../Models/BillingAddressModel');
-const User = require('../Models/UserModel');
 
 module.exports.ADD_BILLINGADDRESS = async (req, res) => {
     const { firstName, lastName, phoneNumber, streetAddress, userId,
         apartment, city, postcode, state, email } = req.body;
     try {
-        await BillingAddress.findOne({ email: email })
+        await BillingAddress.findOne({ userId: userId })
             .exec()
             .then((response) => {
                 if (response) {
@@ -50,7 +49,7 @@ module.exports.ADD_BILLINGADDRESS = async (req, res) => {
                             if (address) {
                                 res.status(200).json({
                                     message: "Address added successfully!",
-                                    address: address
+                                    billingAddress: address
                                 })
                             }
                         })

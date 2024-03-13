@@ -2,7 +2,7 @@ const Product = require('../../Models/ProductsModel');
 const path = require('path');
 
 module.exports.ADD_PRODUCT = async (req, res) => {
-    const { productName, productCompany, description, options, bulletDescription, productCategory } = req.body;    
+    const { productName, productCompany, description, options, bulletDescription, productCategory } = req.body;
     try {
         await Product.findOne({ productName: productName, productCompany: productCompany })
             .exec()
@@ -147,18 +147,19 @@ module.exports.EDIT_PRODUCT = async (req, res) => {
         const { productName, productCompany, description, options, bulletDescription } = req.body;
 
         // Update product fields
+        if (req.files) {
+            const productImage = req.files.productImage;
+            const uploadPath = path.join(__dirname, '..', '..', 'Images', 'ProductImages', productImage.name);
+            await productImage.mv(uploadPath);
+            productResponse.productImage = productImage.name
+        }
+
         productResponse.productName = productName;
         productResponse.productCompany = productCompany;
         productResponse.description = description;
         productResponse.options = options;
         productResponse.bulletDescription = bulletDescription;
 
-        // If a new image is uploaded, update the product image
-        if (req.file) {
-            productResponse.productImage = req.file.filename;
-        }
-
-        // Save the updated product
         const updatedResponse = await productResponse.save();
 
         // Send response to client                

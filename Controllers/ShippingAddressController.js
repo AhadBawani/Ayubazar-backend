@@ -3,9 +3,9 @@ const ShippingAddress = require('../Models/ShippingAddressModel');
 
 module.exports.ADD_SHIPPING_ADDRESS = async (req, res) => {
     const { firstName, lastName, phoneNumber, userId,
-        email, streetAddress, apartment, city, postcode, state } = req.body;
+        email, streetAddress, apartment, city, postcode, state } = req.body;        
     try {
-        await ShippingAddress.findOne({ email: email })
+        await ShippingAddress.findOne({ userId:userId })
             .exec()
             .then((shippingResponse) => {
                 if (shippingResponse) {
@@ -20,14 +20,13 @@ module.exports.ADD_SHIPPING_ADDRESS = async (req, res) => {
                         state: state,
                         email: email
                     }
-                    console.log("Update obj : ", obj);
                     ShippingAddress.findOneAndUpdate({ userId: userId }, obj, { new: true })
                         .exec()
                         .then((updateResponse) => {
                             if (updateResponse) {
                                 res.status(200).json({
                                     message: "Shipping address updated successfully!",
-                                    ShippingAddress: updateResponse
+                                    shippingAddress: updateResponse
                                 })
                             }
                         })
@@ -51,7 +50,7 @@ module.exports.ADD_SHIPPING_ADDRESS = async (req, res) => {
                             if (address) {
                                 res.status(200).json({
                                     message: "Address added successfully!",
-                                    address: address
+                                    shippingAddress: address
                                 })
                             }
                         })
