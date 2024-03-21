@@ -2,10 +2,18 @@ const Orders = require('../Models/OrdersModel');
 const UserCartModel = require('../Models/UserCartModel');
 
 module.exports.PLACE_ORDER = async (req, res) => {
-     const { orderId, userId, products, orderShippingAddress,
+     const { userId, products, orderShippingAddress, status,
           orderBillingAddress, subTotal, shipping, total, paymentType } = req.body;
 
      try {
+          const latestOrder = await Orders.findOne({}, {}, { sort: { '_id': -1 } }).exec();
+
+          let orderId;
+          if (latestOrder) {
+               orderId = parseInt(latestOrder.orderId) + 1;
+          } else {
+               orderId = 1000;
+          }
           const order = new Orders({
                userId: userId,
                orderId: parseInt(orderId),
@@ -15,41 +23,29 @@ module.exports.PLACE_ORDER = async (req, res) => {
                paymentType: paymentType,
                subTotal: subTotal,
                shipping: shipping,
-               status: 'Pending',
+               status: status,
                total: total
           });
-          await order.save();
+          await order
+               .save()
+               .then((orderResponse) => {
+                    if (orderResponse) {
+                         res.status(200).json({
+                              message: "Order placed successfully!",
+                              order: {
+                                   userId: orderResponse?.userId,
+                                   orderId: orderResponse?.orderId,
+                                   paymentType: orderResponse?.paymentType,
+                                   createdAt: orderResponse?.createdAt,
+                                   total: orderResponse?.total
+                              }
+                         });
+                    }
+               });
 
-          await UserCartModel.deleteMany({ userId: userId }).exec();
-
-          res.status(200).json({
-               message: "Order placed successfully!",
-               orderId: orderId
-          });
      } catch (error) {
           console.log('Error in place order controller:', error);
           res.status(500).json({ error: 'Internal server error' });
-     }
-}
-
-module.exports.GET_ORDER_ID = async (req, res) => {
-     try {
-          await Orders.findOne({}, {}, { sort: { '_id': -1 } })
-               .exec()
-               .then((orderResponse) => {
-                    if (orderResponse) {
-                         res.status(200).send({
-                              orderId: parseInt(parseInt(orderResponse.orderId) + 1)
-                         })
-                    } else {
-                         res.status(200).send({
-                              orderId: 1000
-                         })
-                    }
-               })
-     }
-     catch (error) {
-          console.log('error in getting order ID : ', error);
      }
 }
 
@@ -101,5 +97,45 @@ module.exports.GET_ORDER = async (req, res) => {
      }
      catch (error) {
           console.log('error in get order controller : ', error);
+     }
+}
+
+module.exports.GET_ORDER_BY_ID = async (req, res) => {
+     const { userId, orderId } = req.params;
+     try {
+          await Orders.findOne({ userId: userId, orderId: orderId })
+               .exec()
+               .then((orderResponse) => {
+                    if (orderResponse.status === 'waiting') {
+                         res.status(200).json(orderResponse);
+                    }
+               })
+     }
+     catch (error) {
+          console.log('error in getting order detail by ID : ', error);
+     }
+}
+
+module.exports.UPDATE_ORDER = async (req, res) => {
+     const { orderId, userId, status } = req.body;
+     try {
+          await Orders.findOne({ orderId: orderId })
+               .exec()
+               .then(async (orderResponse) => {
+                    if (orderResponse.status === 'waiting') {
+                         await UserCartModel.deleteMany({ userId: userId }).exec();
+                         await Orders.findOneAndUpdate({ orderId: orderId }, { status: status }, { new: true })
+                              .exec()
+                              .then((response) => {
+                                   res.status(200).json({
+                                        message: "Updated successfully!",
+                                        order: response
+                                   })
+                              })
+                    }
+               })
+     }
+     catch (error) {
+          console.log('error in update order controller : ', error);
      }
 }

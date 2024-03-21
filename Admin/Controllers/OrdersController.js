@@ -1,5 +1,6 @@
 const Orders = require('../../Models/OrdersModel');
 const ExcelJS = require('exceljs');
+const Products = require('../../Models/ProductsModel');
 
 module.exports.GET_ALL_ORDERS = async (req, res) => {
      try {
@@ -192,7 +193,7 @@ module.exports.GET_ORDER_DETAIL_IN_EXCEL = async (req, res) => {
           }
 
           const orders = await Orders.find({ orderId: { $gte: fromOrderId, $lte: toOrderId } })
-               .populate('userId', 'firstName lastName email')
+               .populate('userId', 'displayName email')
                .populate('orderShippingAddress', 'houseNumberAndStreetName apartment city postcode state phoneNumber')
                .populate('orderBillingAddress', 'streetAddress apartment city postcode state phoneNumber')
                .exec();
@@ -220,10 +221,9 @@ module.exports.GET_ORDER_DETAIL_IN_EXCEL = async (req, res) => {
           orders.forEach(order => {
                const shippingAddress = `${order.orderShippingAddress.houseNumberAndStreetName}, ${order.orderShippingAddress.apartment}, ${order.orderShippingAddress.city}, ${order.orderShippingAddress.postcode}, ${order.orderShippingAddress.state}, Phone: ${order.orderShippingAddress.phoneNumber}`;
                const billingAddress = `${order.orderBillingAddress.streetAddress}, ${order.orderBillingAddress.apartment}, ${order.orderBillingAddress.city}, ${order.orderBillingAddress.postcode}, ${order.orderBillingAddress.state}, Phone: ${order.orderBillingAddress.phoneNumber}`;
-
                worksheet.addRow({
                     orderId: order.orderId,
-                    userName: `${order.userId.firstName} ${order.userId.lastName}`,
+                    userName: order.userId.displayName,
                     userEmail: order.userId.email,
                     shippingAddress,
                     billingAddress,
@@ -237,15 +237,82 @@ module.exports.GET_ORDER_DETAIL_IN_EXCEL = async (req, res) => {
                });
           });
 
-          // Set response headers
           res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
           res.setHeader('Content-Disposition', 'attachment; filename=orders.xlsx');
-          
-          await workbook.xlsx.write(res, { responseType: 'blob' });
 
+          await workbook.xlsx.write(res);
      } catch (error) {
           console.log('Error in getting order detail in Excel form:', error);
           res.status(500).json({ error: 'Internal Server Error' });
      }
 };
 
+const startOfMonth = new Date();
+startOfMonth.setDate(1);
+
+const endOfMonth = new Date();
+endOfMonth.setMonth(endOfMonth.getMonth() + 1);
+endOfMonth.setDate(0);
+
+module.exports.GET_MONTHLY_REPORT = async (req, res) => {
+     try {
+          const orders = await Orders.find({
+               createdAt: {
+                    $gte: startOfMonth,
+                    $lte: endOfMonth
+               }
+          });
+          let productsArr = [];
+          let sum = 0;
+          let pendingOrders = 0;
+          let deliveredOrder = 0;
+          for (let i = 0; i < orders.length; i++) {
+               if (orders[i]?.status === 'Pending') {
+                    pendingOrders++;
+               }
+               if (orders[i]?.status === 'Delivered') {
+                    deliveredOrder++;
+                    sum += orders[i]?.total;
+               }
+               for (let j = 0; j < orders[i]?.products?.length; j++) {
+                    let product = JSON.parse(orders[i]?.products[j]);
+                    let productId = product[0]?.product?._id;
+                    let quantity = product[0]?.quantity;
+
+                    // Check if the product with the same ID already exists in the array
+                    let existingProductIndex = productsArr.findIndex(item => item.productId === productId);
+
+                    if (existingProductIndex !== -1) {
+                         // If the product exists, increment the quantity
+                         productsArr[existingProductIndex].quantity += quantity;
+                    } else {
+                         // If the product doesn't exist, add a new object to the array
+                         let obj = { productId: productId, quantity: quantity };
+                         productsArr.push(obj);
+                    }
+               }
+          }
+          // console.log("Pending : ", pendingOrders, " Delivered : ", deliveredOrder, " sum : ", sum);
+          let maxQuantityProduct = null;
+          let maxQuantity = 0;
+
+          for (let productObj of productsArr) {
+               if (productObj.quantity > maxQuantity) {
+                    maxQuantity = productObj.quantity;
+                    maxQuantityProduct = productObj.productId;
+               }
+          }
+          const highestSalingProduct = await Products.findById(maxQuantityProduct);
+          
+          let totalSalesObj = { text:'Total Sales', value:sum };
+          let pendingOrdersObj = { text:'Pending Orders', value:pendingOrders };
+          let completeOrdersObj = { text:'Completed Orders', value: deliveredOrder};
+          let highestSalingProductObj = { text:'Best Saling Product', value:highestSalingProduct };
+          const arr = [totalSalesObj, pendingOrdersObj, completeOrdersObj, highestSalingProductObj];
+
+          res.status(200).json(arr);
+     } catch (error) {
+          console.error('Error generating monthly report:', error);
+          res.status(500).json({ error: 'Internal Server Error' });
+     }
+};

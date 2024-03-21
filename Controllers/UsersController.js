@@ -265,3 +265,21 @@ module.exports.GET_USER_BY_EMAIL = async (req, res) => {
         console.log('error in getting user by email : ', error);
     }
 }
+
+module.exports.GET_USER_BY_EMAIL_IF_EXIST = async (req, res) => {
+    const { email } = req.body;
+    try {
+        await User.findOne({ email: email })
+            .exec()
+            .then((response) => {
+                if (response) {
+                    res.status(200).json(response);
+                } else {
+                    res.status(200).json(null);
+                }
+            })
+    }
+    catch (error) {
+        console.log('error in getting user by email : ', error);
+    }
+}
