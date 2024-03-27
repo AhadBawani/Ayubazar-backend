@@ -29,6 +29,7 @@ app.use('/company-images', express.static('Images/CompanyImages'));
 app.use('/product-images', express.static('Images/ProductImages'));
 app.use('/blog-images', express.static('Images/BlogImages'));
 app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 app.use(fileUpload());
 scheduler.start();
 app.use('/company', CompanyRoutes);
@@ -46,7 +47,7 @@ app.use('/category', CategoryRoutes);
 app.use('/contact', ContactUsRoutes);
 app.use('/orders', OrdersRoutes);
 app.use('/admin-orders', OrdersAdminRoutes);
-app.use('/pay', PaymentRoutes);
+app.use('/payment', PaymentRoutes);
 
 app.use('/', (req, res) => {
     res.send({

@@ -115,27 +115,3 @@ module.exports.GET_ORDER_BY_ID = async (req, res) => {
           console.log('error in getting order detail by ID : ', error);
      }
 }
-
-module.exports.UPDATE_ORDER = async (req, res) => {
-     const { orderId, userId, status } = req.body;
-     try {
-          await Orders.findOne({ orderId: orderId })
-               .exec()
-               .then(async (orderResponse) => {
-                    if (orderResponse.status === 'waiting') {
-                         await UserCartModel.deleteMany({ userId: userId }).exec();
-                         await Orders.findOneAndUpdate({ orderId: orderId }, { status: status }, { new: true })
-                              .exec()
-                              .then((response) => {
-                                   res.status(200).json({
-                                        message: "Updated successfully!",
-                                        order: response
-                                   })
-                              })
-                    }
-               })
-     }
-     catch (error) {
-          console.log('error in update order controller : ', error);
-     }
-}
