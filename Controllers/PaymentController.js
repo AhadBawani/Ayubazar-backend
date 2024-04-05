@@ -2,6 +2,7 @@ const crypto = require('crypto');
 const axios = require('axios');
 const OrdersModel = require('../Models/OrdersModel');
 const UserCartModel = require('../Models/UserCartModel');
+const CouponModel = require('../Models/CouponModel');
 require('dotenv/config');
 
 const MERCHANT_ID = 'PGTESTPAYUAT';
@@ -9,7 +10,7 @@ const MERCHANT_ID = 'PGTESTPAYUAT';
 const SALT_KEY = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
 
 module.exports.CREATE_NEW_PAYMENT = async (req, res) => {
-     const { amount, orderId } = req.body;     
+     const { amount, orderId } = req.body;
      try {
           const merchantTransactionId = req.body.transactionId;
           const data = {
@@ -63,7 +64,7 @@ module.exports.CHECK_PAYMENT_STATUS = async (req, res) => {
      const orderId = req.params.orderId;
      const merchantTransactionId = res.req.body.transactionId
      const merchantId = res.req.body.merchantId
-     const keyIndex = 1;     
+     const keyIndex = 1;
      const string = `/pg/v1/status/${merchantId}/${merchantTransactionId}` + SALT_KEY;
      const sha256 = crypto.createHash('sha256').update(string).digest('hex');
      const checksum = sha256 + "###" + keyIndex;
@@ -80,25 +81,36 @@ module.exports.CHECK_PAYMENT_STATUS = async (req, res) => {
      };
      // CHECK PAYMENT TATUS
      axios.request(options)
-          .then(async (response) => {
+          .then(async (response) => {               
                if (response.data.success === true) {
-                    const url = `http://localhost:3000/success`
-                    await OrdersModel.findOne({ orderId: orderId })
-                         .exec()
+                    const url = `http://localhost:3000/success/${orderId}`;
+                    await OrdersModel.findOne({ orderId: orderId }).exec()
                          .then(async (orderResponse) => {
                               if (orderResponse.status === 'waiting') {
                                    await UserCartModel.deleteMany({ userId: orderResponse.userId }).exec();
-                                   await
-                                        OrdersModel.findOneAndUpdate
-                                             (
-                                                  { orderId: orderId },
-                                                  { status: 'Pending' },
-                                                  { new: true }
-                                             ).exec();
+                                   // Check if a coupon was used in the order
+                                   const couponCode = orderResponse.coupon;
+                                   if (couponCode) {
+                                        // Find the corresponding coupon in the CouponModel
+                                        const coupon = await CouponModel.findById(couponCode).exec();
+                                        if (coupon) {
+                                             // Update the canUse property of the coupon
+                                             let canUse = coupon.canUse - 1;
+                                             if (canUse < 0) {
+                                                  canUse = 0; // Ensure canUse does not go below 0
+                                             }
+                                             await CouponModel.findByIdAndUpdate(couponCode, { canUse: canUse }, { new: true }).exec();
+                                        }
+                                   }
+                                   // Update order status to 'Pending'
+                                   await OrdersModel.findOneAndUpdate({ orderId: orderId },
+                                        { status: 'Pending', paymentType: response.data.data.paymentInstrument.type },
+                                        { new: true }).exec();
                               }
-                         })
-                    return res.redirect(url)
-               } else {
+                         });
+                    return res.redirect(url);
+               }
+               else {
                     const url = `http://localhost:3000/failure`
                     await OrdersModel.findOne({ orderId: orderId })
                          .exec()

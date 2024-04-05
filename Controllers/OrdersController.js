@@ -1,8 +1,7 @@
 const Orders = require('../Models/OrdersModel');
-const UserCartModel = require('../Models/UserCartModel');
 
 module.exports.PLACE_ORDER = async (req, res) => {
-     const { userId, products, orderShippingAddress, status,
+     const { userId, products, orderShippingAddress, status, coupon,
           orderBillingAddress, subTotal, shipping, total, paymentType } = req.body;
 
      try {
@@ -22,6 +21,7 @@ module.exports.PLACE_ORDER = async (req, res) => {
                orderBillingAddress: orderBillingAddress,
                paymentType: paymentType,
                subTotal: subTotal,
+               coupon:coupon,
                shipping: shipping,
                status: status,
                total: total
@@ -85,9 +85,11 @@ module.exports.REQUEST_FOR_CANCEL = async (req, res) => {
 }
 
 module.exports.GET_ORDER = async (req, res) => {
-     const { userId, orderId } = req.params;
+     const { userId, orderId } = req.params;     
      try {
           await Orders.findOne({ userId: userId, orderId: orderId })
+               .populate('orderBillingAddress')
+               .populate('orderShippingAddress')
                .exec()
                .then((orderResponse) => {
                     if (orderResponse) {
@@ -97,21 +99,5 @@ module.exports.GET_ORDER = async (req, res) => {
      }
      catch (error) {
           console.log('error in get order controller : ', error);
-     }
-}
-
-module.exports.GET_ORDER_BY_ID = async (req, res) => {
-     const { userId, orderId } = req.params;
-     try {
-          await Orders.findOne({ userId: userId, orderId: orderId })
-               .exec()
-               .then((orderResponse) => {
-                    if (orderResponse.status === 'waiting') {
-                         res.status(200).json(orderResponse);
-                    }
-               })
-     }
-     catch (error) {
-          console.log('error in getting order detail by ID : ', error);
      }
 }

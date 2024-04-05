@@ -42,8 +42,12 @@ module.exports.VALIDATE_COUPON = async (req, res) => {
             .select('coupon percentage canUse')
             .exec()
             .then((couponResponse) => {
-                if (couponResponse) {
-                    res.status(200).json(couponResponse)
+                if (couponResponse && couponResponse.canUse > 0) {
+                    res.status(200).json({
+                        _id:couponResponse._id,
+                        coupon:couponResponse.coupon,
+                        percentage:couponResponse.percentage
+                    })
                 } else {
                     res.status(200).send({
                         message: "Invalid Coupon!"

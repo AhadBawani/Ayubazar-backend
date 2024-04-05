@@ -37,6 +37,10 @@ const OrderModel = new mongoose.Schema(
                type: String,
                required: true
           },
+          coupon: {
+               type: String,
+               ref:'Coupon'
+          },
           status: {
                type: String,
                required: true
@@ -48,6 +52,9 @@ const OrderModel = new mongoose.Schema(
           total: {
                type: Number,
                required: true
+          },
+          paymentType:{
+               type:String
           },
           delete: {
                type: Boolean,
