@@ -1,5 +1,6 @@
 const Company = require('../../Models/CompanyModel');
 const Products = require('../../Models/ProductsModel');
+const path = require('path');
 
 module.exports.ADD_COMPANY = async (req, res) => {
     const { companyName } = req.body;
@@ -7,16 +8,23 @@ module.exports.ADD_COMPANY = async (req, res) => {
     try {
         await Company.findOne({ companyName: companyName })
             .exec()
-            .then((companyResponse) => {
+            .then(async (companyResponse) => {
                 if (companyResponse) {
                     res.status(409).send({
                         message: "Company already exists!"
                     })
                 }
                 else {
+                    if (!req.files || Object.keys(req.files).length === 0) {
+                        return res.status(400).json({ message: 'No files were uploaded.' });
+                    }
+                    const companyImage = req.files.companyImage;
+                    const uploadPath = path.join(__dirname, '..', '..', 'Images', 'CompanyImages', companyImage.name);
+                    await companyImage.mv(uploadPath);
+
                     const company = new Company({
                         companyName: companyName,
-                        companyImage: req.file.filename
+                        companyImage: companyImage.name
                     }).save();
 
                     company.then(company => {
@@ -71,10 +79,10 @@ module.exports.EDIT_COMPANY = async (req, res) => {
 
 module.exports.GET_ALL_COMPANY = async (req, res) => {
     const companies = await Company.find().exec();
-    const companyList = [];    
+    const companyList = [];
     try {
         for (const company of companies) {
-            const products = await Products.find({ productCompany: company._id });            
+            const products = await Products.find({ productCompany: company._id });
             const parsedProducts = products.map((product) => ({
                 _id: product._id,
                 productName: product.productName,
