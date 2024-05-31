@@ -3,41 +3,42 @@ const Products = require('../../Models/ProductsModel');
 
 module.exports.CREATE_OFFER = async (req, res) => {
     const { discountTitle, discountPercentage, expiryDate, productArr } = req.body;
-
     try {
         await OfferDiscount.deleteMany({});
-        const offerDiscount = new OfferDiscount({
+        const offerDiscount = await OfferDiscount.create({
             discountTitle: discountTitle,
             discountPercentage: discountPercentage,
             expiryDate: expiryDate,
-            products:productArr,
+            products: productArr,
             expired: false
-        }).save();
-
-        offerDiscount
-            .then((offerResponse) => {
-                if (offerResponse) {
-                    for (let i = 0; i < productArr.length; i++) {
-                        Products.findByIdAndUpdate(productArr[i]._id, { discount: discountPercentage }, { new: true })
-                            .exec()
-                            .then((productResponse) => {
-
-                            })
-                            .catch((error) => {
-                                console.log('error in discount controller : ', error);
-                            })
-                    }
-                    res.status(201).send({
-                        message: "Offer created successfully!",
-                        offer: offerResponse
+        });
+        if (offerDiscount) {
+            for (let i = 0; i < productArr.length; i++) {
+                const product = await Products.findById(productArr[i]);
+                if (product) {
+                    const updatedOptions = JSON.parse(product.options)?.map((opt, index) => {
+                        const price = parseFloat(opt.price);
+                        const discountedPrice = Math.round(price - (price * discountPercentage) / 100);
+                        return { ...opt, price: discountedPrice.toString() };
                     })
+                    await Products.findByIdAndUpdate(productArr[i],
+                        {
+                            options: JSON.stringify(updatedOptions),
+                            discount: discountPercentage
+                        },
+                        { new: true });
                 }
-            })
-    }
-    catch (error) {
+            }
+            return res.status(201).send({
+                message: "Offer created successfully!",
+                offer: offerDiscount
+            });
+        }
+    } catch (error) {
         console.log('error in create offer controller : ', error);
+        return res.status(500).send({ message: "Internal server error" });
     }
-}
+};
 
 module.exports.GET_DISCOUNT_OFFER = async (req, res) => {
     try {

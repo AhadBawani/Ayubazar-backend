@@ -4,10 +4,10 @@ const OrdersModel = require('../Models/OrdersModel');
 const UserCartModel = require('../Models/UserCartModel');
 const CouponModel = require('../Models/CouponModel');
 require('dotenv/config');
+// test API KEY
 
-const MERCHANT_ID = 'PGTESTPAYUAT';
-// const MERCHANT_ID = 'M22N7LO5DTCDJ';
-const SALT_KEY = "099eb0cd-02cf-4e2a-8aca-3e6c6aff0399";
+const MERCHANT_ID = 'AYUBAZARONLINE';
+const SALT_KEY = "d7c0fe10-c3b3-48dc-9b79-f5f7be6636f6";
 
 module.exports.CREATE_NEW_PAYMENT = async (req, res) => {
      const { amount, orderId } = req.body;
@@ -18,8 +18,10 @@ module.exports.CREATE_NEW_PAYMENT = async (req, res) => {
                "merchantTransactionId": merchantTransactionId,
                "merchantUserId": "MUID123",
                "amount": amount * 100,
-               "redirectUrl": `http://localhost:5000/payment/status/${orderId}`,
+               "redirectUrl": `https://api.ayubazar.in/payment/status/${orderId}`,
                "redirectMode": "POST",
+               "callbackUrl":"https://webhook.site/374a8856-4547-4f83-80c5-457a262eab95",
+               "mobileNumber":"9428560666",
                "paymentInstrument": {
                     "type": "PAY_PAGE"
                }
@@ -30,9 +32,7 @@ module.exports.CREATE_NEW_PAYMENT = async (req, res) => {
           const string = payloadMain + '/pg/v1/pay' + SALT_KEY;
           const sha256 = crypto.createHash('sha256').update(string).digest('hex');
           const checksum = sha256 + '###' + keyIndex;
-
-          const prod_URL = "https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/pay"
-          // const prod_URL = "https://api.phonepe.com/apis/hermes/pg/v1/pay";
+          const prod_URL = "https://api.phonepe.com/apis/hermes";
           const options = {
                method: 'POST',
                url: prod_URL,
@@ -70,8 +70,7 @@ module.exports.CHECK_PAYMENT_STATUS = async (req, res) => {
      const checksum = sha256 + "###" + keyIndex;
      const options = {
           method: 'GET',
-          // url: `https://api.phonepe.com/apis/hermes/pg/v1/status/${merchantId}/${merchantTransactionId}`,
-          url: `https://api-preprod.phonepe.com/apis/pg-sandbox/pg/v1/status/${merchantId}/${merchantTransactionId}`,
+          url: `https://api.phonepe.com/apis/hermes/pg/v1/status/${merchantId}/${merchantTransactionId}`,
           headers: {
                accept: 'application/json',
                'Content-Type': 'application/json',
@@ -81,7 +80,7 @@ module.exports.CHECK_PAYMENT_STATUS = async (req, res) => {
      };
      // CHECK PAYMENT TATUS
      axios.request(options)
-          .then(async (response) => {               
+          .then(async (response) => {
                if (response.data.success === true) {
                     const url = `http://localhost:3000/success/${orderId}`;
                     await OrdersModel.findOne({ orderId: orderId }).exec()

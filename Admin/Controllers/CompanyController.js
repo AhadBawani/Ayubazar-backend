@@ -1,5 +1,6 @@
 const Company = require('../../Models/CompanyModel');
 const Products = require('../../Models/ProductsModel');
+const Categories = require('../../Models/CategoryModel');
 const path = require('path');
 
 module.exports.ADD_COMPANY = async (req, res) => {
@@ -83,16 +84,13 @@ module.exports.GET_ALL_COMPANY = async (req, res) => {
     try {
         for (const company of companies) {
             const products = await Products.find({ productCompany: company._id });
-            const parsedProducts = products.map((product) => ({
-                _id: product._id,
-                productName: product.productName,
-                options: product.options,
-            }));
-
+            const categories = await Categories.find({ company: company._id });            
             companyList.push({
                 _id: company._id,
                 companyName: company.companyName,
-                products: parsedProducts,
+                companyImage: company.companyImage,
+                products: products,
+                categories: categories
             });
         }
 

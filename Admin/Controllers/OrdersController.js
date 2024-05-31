@@ -4,7 +4,7 @@ const Products = require('../../Models/ProductsModel');
 
 module.exports.GET_ALL_ORDERS = async (req, res) => {
      try {
-          await Orders.find({ status: 'Pending', cancelOrder: null, delete: false })
+          await Orders.find({ status: 'Pending', delete: false })
                .populate('userId')
                .populate('orderShippingAddress')
                .populate('orderBillingAddress')
@@ -52,6 +52,24 @@ module.exports.DELETE_ORDER = async (req, res) => {
      }
      catch (error) {
           console.log('error in delete order controller : ', error);
+     }
+}
+
+module.exports.GET_DELETED_ORDERS = async (req, res) => {
+     try {
+          await Orders.find({ delete: true, status: 'Pending' })
+               .populate('userId')
+               .populate('orderShippingAddress')
+               .populate('orderBillingAddress')
+               .exec()
+               .then((orderResponse) => {
+                    if (orderResponse) {
+                         res.status(200).json(orderResponse);
+                    }
+               })
+     }
+     catch (error) {
+          console.log('error in get delete order controller : ', error);
      }
 }
 
@@ -173,7 +191,7 @@ module.exports.ORDER_EXCEL_DETAILS = async (req, res) => {
 
 module.exports.GET_ORDER_DETAIL_IN_EXCEL = async (req, res) => {
      const { from, to } = req.params;
-
+     console.log(req.params);
      const fromOrderId = parseInt(from);
      const toOrderId = parseInt(to);
 
@@ -200,7 +218,6 @@ module.exports.GET_ORDER_DETAIL_IN_EXCEL = async (req, res) => {
 
           const workbook = new ExcelJS.Workbook();
           const worksheet = workbook.addWorksheet('Orders');
-
           // Define columns
           worksheet.columns = [
                { header: 'Order ID', key: 'orderId', width: 15 },
@@ -216,7 +233,6 @@ module.exports.GET_ORDER_DETAIL_IN_EXCEL = async (req, res) => {
                { header: 'Total', key: 'total', width: 15 },
                { header: 'Deleted', key: 'delete', width: 10 }
           ];
-
           // Add rows
           orders.forEach(order => {
                const shippingAddress = `${order.orderShippingAddress.houseNumberAndStreetName}, ${order.orderShippingAddress.apartment}, ${order.orderShippingAddress.city}, ${order.orderShippingAddress.postcode}, ${order.orderShippingAddress.state}, Phone: ${order.orderShippingAddress.phoneNumber}`;
@@ -236,10 +252,8 @@ module.exports.GET_ORDER_DETAIL_IN_EXCEL = async (req, res) => {
                     delete: order.delete ? 'Yes' : 'No'
                });
           });
-
           res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
           res.setHeader('Content-Disposition', 'attachment; filename=orders.xlsx');
-
           await workbook.xlsx.write(res);
      } catch (error) {
           console.log('Error in getting order detail in Excel form:', error);
@@ -303,11 +317,11 @@ module.exports.GET_MONTHLY_REPORT = async (req, res) => {
                }
           }
           const highestSalingProduct = await Products.findById(maxQuantityProduct);
-          
-          let totalSalesObj = { text:'Total Sales', value:sum };
-          let pendingOrdersObj = { text:'Pending Orders', value:pendingOrders };
-          let completeOrdersObj = { text:'Completed Orders', value: deliveredOrder};
-          let highestSalingProductObj = { text:'Best Saling Product', value:highestSalingProduct };
+
+          let totalSalesObj = { text: 'Total Sales', value: sum };
+          let pendingOrdersObj = { text: 'Pending Orders', value: pendingOrders };
+          let completeOrdersObj = { text: 'Completed Orders', value: deliveredOrder };
+          let highestSalingProductObj = { text: 'Best Saling Product', value: highestSalingProduct };
           const arr = [totalSalesObj, pendingOrdersObj, completeOrdersObj, highestSalingProductObj];
 
           res.status(200).json(arr);
