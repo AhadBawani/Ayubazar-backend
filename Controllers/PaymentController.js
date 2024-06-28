@@ -82,7 +82,7 @@ module.exports.CHECK_PAYMENT_STATUS = async (req, res) => {
      axios.request(options)
           .then(async (response) => {
                if (response.data.success === true) {
-                    const url = `http://localhost:3000/success/${orderId}`;
+                    const url = `https://ayubazar.in/success/${orderId}`;
                     await OrdersModel.findOne({ orderId: orderId }).exec()
                          .then(async (orderResponse) => {
                               if (orderResponse.status === 'waiting') {
@@ -110,7 +110,7 @@ module.exports.CHECK_PAYMENT_STATUS = async (req, res) => {
                     return res.redirect(url);
                }
                else {
-                    const url = `http://localhost:3000/failure`
+                    const url = `https://ayubazar.in/failure`
                     await OrdersModel.findOne({ orderId: orderId })
                          .exec()
                          .then(async (orderResponse) => {

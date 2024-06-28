@@ -165,7 +165,7 @@ module.exports.FORGOT_PASSWORD = async (req, res) => {
             expiresIn: '5m',
         });
 
-        const resetLink = `http://localhost:3000/reset-password/${token}`;
+        const resetLink = `https://ayubazar.in/reset-password/${token}`;
 
         const mailOptions = {
             from: 'ahadbawani123@gmail.com',
