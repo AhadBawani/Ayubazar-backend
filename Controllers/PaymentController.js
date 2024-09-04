@@ -8,6 +8,7 @@ const PaymentSession = require('../Models/PaymentSessionModel');
 const Users = require('../Models/UserModel');
 const ShippingAddress = require('../Models/ShippingAddressModel');
 const { transporter } = require('../Utils/transporter');
+const generateInvoice = require('../Utils/generateInvoice');
 require('dotenv/config');
 // test API KEY
 
@@ -129,6 +130,34 @@ module.exports.CHECK_PAYMENT_STATUS = async (req, res) => {
                                    const shippingAddress = await ShippingAddress.
                                         findById(orderResponse.orderShippingAddress).exec();
                                    const invoicePdf = await generateInvoice(orderResponse, shippingAddress);
+                                   const mailOptions = {
+                                        from: 'admin@ayubazar.in',
+                                        to: user.email,
+                                        subject: 'Order Placed Successfully!',
+                                        html: `
+                                            <div style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
+                                                <p>Your order has been placed successfully.</p>
+                                                <p>Your order ID is <b>${orderId}</b>.</p>
+                                                <p>Current status: <b>${orderResponse?.status}</b>.</p>
+                                            </div>
+                                        `,
+                                        attachments: [
+                                             {
+                                                  filename: 'invoice.pdf',
+                                                  content: invoicePdf,
+                                                  contentType: 'application/pdf'
+                                             }
+                                        ]
+                                   };
+
+                                   transporter.sendMail(mailOptions, (error, info) => {
+                                        if (error) {
+                                             console.error('Email sending error:', error);
+                                             return res.status(500).json({ message: 'Failed to send email' });
+                                        }
+                                        console.log('Email sent:', info.response);
+                                   });
+
                                    const adminMailOptions = {
                                         from: 'admin@ayubazar.in',
                                         to: 'admin@ayubazar.in',
