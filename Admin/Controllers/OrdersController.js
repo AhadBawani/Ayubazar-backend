@@ -400,7 +400,7 @@ module.exports.GET_MONTHLY_REPORT = async (req, res) => {
           let totalSalesObj = { text: 'Total Sales', value: sum };
           let pendingOrdersObj = { text: 'Pending Orders', value: pendingOrders };
           let completeOrdersObj = { text: 'Completed Orders', value: deliveredOrder };
-          let highestSalingProductObj = { text: 'Best Saling Product', value: highestSalingProduct };
+          let highestSalingProductObj = { text: 'Best Selling Product', value: highestSalingProduct };
           const arr = [totalSalesObj, pendingOrdersObj, completeOrdersObj, highestSalingProductObj];
 
           res.status(200).json(arr);

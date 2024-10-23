@@ -369,10 +369,14 @@ module.exports.EDIT_PRODUCT = async (req, res) => {
             return res.status(404).json({ message: "Product not found!" });
         }
 
-        const { productName, productCompany, description, category, subCategory, discount, salesPrice,
+        const { productName, productCompany, description, category, subCategory, discount, salesPrice, deletedImageIndices,
             options, bulletDescription, taxStatus, taxClass, isVariationAvailable, codAvailable } = req.body;
 
-        // Only update images if they are provided
+        if (JSON.parse(deletedImageIndices).length > 0) {
+            const indices = JSON.parse(deletedImageIndices);
+            productResponse.productImages = productResponse.productImages.filter((_, i) => !indices.includes(i));
+        }
+        
         if (req.files && req.files.productImages) {
             const imageFiles = req.files.productImages;
             const imageNames = [];
@@ -388,7 +392,7 @@ module.exports.EDIT_PRODUCT = async (req, res) => {
                     imageNames.push(file.name);
                 }
             }
-            productResponse.productImages = imageNames;
+            productResponse.productImages = [...productResponse.productImages, ...imageNames];
         }
         productResponse.productName = productName;
         productResponse.productCompany = productCompany;

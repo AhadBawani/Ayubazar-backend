@@ -62,7 +62,7 @@ app.use('/order-cancel-request', OrdersCancelReasonRoutes);
 
 app.use('/', (req, res) => {
     res.send({
-        message: "backend v24.1 running successfully!"
+        message: "backend v24.2 running successfully!"
     })
 })
 
